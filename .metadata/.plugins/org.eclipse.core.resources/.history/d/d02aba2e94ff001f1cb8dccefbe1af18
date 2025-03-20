@@ -1,0 +1,65 @@
+package com.proa.app.services;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.proa.app.dao.IClientDAO;
+import com.proa.app.entities.Client;
+import com.proa.app.exceptions.ClientNotFoundException;
+
+
+
+
+//Anotacion que indica que esta clase es un servicio gestionado por Spring.
+//Permite que el contenedor de Spring la detecte y registre como un bean.
+@Service
+public class ServicesImpl implements IService{
+	
+	// Inyeccion automatica del bean que implementa la interfaz IClientDAO.
+    // El contenedor de Spring se encarga de crear y administrar la instancia.
+	@Autowired
+	private IClientDAO dao;
+	
+	
+	// Implementación del método insert para guardar un cliente en la base de datos.
+    // Utiliza el metodo save() del DAO para realizar la operación.
+    // Retorna true si el objeto fue guardado exitosamente (response no es null).
+	@Override
+	public boolean insert(Client c) {
+		var response= dao.save(c);
+		return response!=null;
+	}
+
+	@Override
+	public List<Client> selectAll() {
+		
+		return (List<Client>)dao.findAll();
+	}
+
+	@Override
+	public boolean update(Client c) throws ClientNotFoundException{
+		
+		if(dao.existsById(c.getId())) {
+			var response=dao.save(c);
+			return response != null;
+		}
+		
+		throw new ClientNotFoundException("Client "+c.getId()+" not found");
+	}
+
+	@Override
+	public Client findById(long id) {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public boolean delete(long id) {
+		// TODO Auto-generated method stub
+		return false;
+	}
+	
+
+}

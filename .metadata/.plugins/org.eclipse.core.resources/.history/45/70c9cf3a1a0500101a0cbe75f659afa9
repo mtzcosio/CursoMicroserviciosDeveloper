@@ -1,0 +1,37 @@
+spring.application.name=micro-gateway
+server.port=8888
+
+#config eureka
+eureka.client.service-url.defaultZone=http://${EUREKA_IP:localhost}:${EUREKA_PORT:9999}/eureka
+
+#disable eureka llegue por el nombre del microservicio
+spring.cloud.gateway.discovery.locator.enabled=false
+
+#normaliza que todos los nombre de los microservicios se puedan buscar con minusculas
+spring.cloud.gateway.discovery.locator.lower-case-service-id=true
+
+#routes
+
+#  -------  ruta micro-client
+
+#Configuaracion de la  ruta de los micriservicios, para determinar que servicios estaran visibles en la red 
+
+spring.cloud.gateway.routes[0].id = micro-client
+
+#Especificar que eureka tiene un valanceador de cargas
+spring.cloud.gateway.routes[0].uri=lb://micro-client
+
+#Indicar la ruta
+spring.cloud.gateway.routes[0].predicates[0]=Path=/api1/**
+
+spring.cloud.gateway.routes[0].filters[0]=StripPrefix=1
+
+
+#  -------  Termina la definicion de ruta micro-client
+
+#Configuaracion de la  ruta de los micriservicios, para determinar que servicios estaran visibles en la red 
+
+spring.cloud.gateway.routes[1].id = micro-order
+spring.cloud.gateway.routes[1].uri=lb://micro-order
+spring.cloud.gateway.routes[1].predicates[0]=Path=/api2/**
+spring.cloud.gateway.routes[1].filters[0]=StripPrefix=1

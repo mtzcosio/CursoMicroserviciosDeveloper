@@ -1,0 +1,178 @@
+package com.proa.app.controller;
+
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+import com.proa.app.entities.Client;
+import com.proa.app.exceptions.ClientNotFoundException;
+import com.proa.app.services.IService;
+
+//Anotación que indica que esta clase es un controlador REST, lo que permite manejar solicitudes HTTP.
+//El controlador manejará solicitudes bajo la ruta "/client".
+
+@RestController
+@RequestMapping("/client") //http://ip:port/client
+public class MicroserviceControler {
+	
+	// Creación de un logger para registrar mensajes de error, información o depuración.
+	private static final Logger LOGGER=LoggerFactory.getLogger(MicroserviceControler.class);
+	
+	
+	
+	// Inyeccion automatica del servicio (interfaz IService) que manejará la lógica de negocio.
+	@Autowired
+	private IService service;
+	
+   		
+	
+	
+	// Método para insertar un cliente. Recibe un objeto de tipo Client y devuelve una respuesta HTTP.
+	@PostMapping
+	public ResponseEntity<String> insert( @RequestBody Client c){
+		try {
+			// Si la inserción del cliente es exitosa, devuelve una respuesta con estado HTTP 201 (CREATED)
+            // y el mensaje "insertado".
+			if (service.insert(c))
+			{
+				 // En caso de error durante la inserción, se registra el error en el log.
+				return new ResponseEntity<>("insertado",HttpStatus.CREATED);
+			}
+		}catch (Exception ex) {
+			
+			 // Si algo sale mal, se devuelve una respuesta con estado HTTP 500 (INTERNAL_SERVER_ERROR) 
+	        // y el mensaje "error".
+			LOGGER.error("ERROR INSERT{}",ex.getMessage());
+		}
+	
+		return new ResponseEntity<>("error",HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+	
+	
+	
+	
+	// Método para obtener todos los clientes. Se mapea a una solicitud GET.
+    // Retorna una lista de clientes con estado HTTP 200 (OK).
+	@GetMapping
+	public ResponseEntity<List<Client>> selectAll(){
+
+		// Llama al método selectAll del servicio para obtener la lista de clientes.
+		return new ResponseEntity<>(service.selectAll(), HttpStatus.OK);
+	}
+	
+	
+	
+			// Anotación que mapea la solicitud HTTP PUT a este método.
+			// Esto se utiliza para actualizar un recurso en el servidor, en este caso, un cliente.
+	@PutMapping
+	public ResponseEntity<String> update(@RequestBody Client c){
+		try {
+					// Llama al servicio para intentar actualizar el cliente. El cliente es recibido
+			        // en el cuerpo de la solicitud (RequestBody) y se pasa al servicio.
+			if(service.update(c))
+							// Si la actualización es exitosa, retorna una respuesta con el mensaje "actualizado" y
+				            // un código de estado HTTP 200 (OK).
+				return new ResponseEntity<>("actualizado",HttpStatus.OK);
+			
+		} catch (ClientNotFoundException ex) {
+						// Si el cliente no se encuentra, se lanza una excepción ClientNotFoundException.
+				        // Se captura la excepción, se registra el mensaje en el log y se devuelve una respuesta
+				        // con el mensaje "cliente no existe" y el código de estado HTTP 404 (NOT_FOUND).
+			LOGGER.info(ex.getMessage());
+			return new ResponseEntity<>("cliente no existe", HttpStatus.NOT_FOUND);
+			
+		}catch(Exception ex) {
+						// Si ocurre cualquier otra excepción, se captura y se registra el error.
+				        // El log registra el mensaje de error relacionado con la actualización del cliente.
+			LOGGER.error("ERROR UPDATE {}", ex.getMessage());	
+		}
+		
+							 // Si algo sale mal (fuera de la excepción ClientNotFoundException), se devuelve una respuesta
+						    // con un mensaje "internal error" y un código de estado HTTP 500 (INTERNAL_SERVER_ERROR).
+		return new ResponseEntity<>("internal error", HttpStatus. INTERNAL_SERVER_ERROR);
+	}
+	
+	
+	
+	// Anotación que mapea una solicitud HTTP GET a este método. La ruta completa será "/client/id".
+	// Se espera que la solicitud tenga un parámetro "id" en la URL, como en: http://ip:port/client/id?id=5
+	@GetMapping("/id") // http://ip:port/client/id?id=5
+	public ResponseEntity<Client> selectById(@RequestParam long id) {
+		try {
+			 // Llama al servicio para buscar un cliente por su ID utilizando el parámetro 'id' recibido
+	        // en la solicitud. Si el cliente se encuentra, lo devuelve con el código de estado HTTP 200 (OK).
+			return new ResponseEntity<>(service.findById(id), HttpStatus.OK);
+			
+		} catch (ClientNotFoundException ex) {
+			// Si el cliente no se encuentra (lanza ClientNotFoundException), se captura la excepción,
+	        // se registra el mensaje de error y se devuelve una respuesta con el código HTTP 404 (NOT_FOUND),
+	        // indicando que el cliente no fue encontrado.
+			LOGGER.info(ex.getMessage());
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+			
+		} catch (Exception ex) {
+			// Si ocurre cualquier otro tipo de excepción, se captura y se registra el error.
+	        // El log registra el mensaje relacionado con la búsqueda del cliente por ID.
+			LOGGER.error("ERROR SELECT BY ID {}", ex.getMessage());
+			
+		}
+        // Si algo sale mal (fuera de las excepciones ClientNotFoundException), se devuelve una respuesta
+	    // con el código de estado HTTP 500 (INTERNAL_SERVER_ERROR), indicando un error interno del servidor.
+		return new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR);
+	}
+	
+	
+	// Anotación que mapea una solicitud HTTP DELETE a este método. La solicitud espera tener un parámetro "id" en la URL.
+	// Esta operación se utiliza para eliminar un cliente por su ID.
+	@DeleteMapping
+	public ResponseEntity<String> delete(@RequestParam long id) {
+
+		try {
+			// Llama al servicio para eliminar el cliente con el ID proporcionado.
+	        // Si la eliminación es exitosa, retorna una respuesta con el mensaje "eliminado" 
+	        // y un código de estado HTTP 200 (OK).
+			if (service.delete(id))
+				return new ResponseEntity<>("eliminado", HttpStatus.OK);
+
+		} catch (ClientNotFoundException ex) {
+			// Si el cliente no existe y lanza una excepción ClientNotFoundException,
+	        // la excepción es capturada y se registra el mensaje en el log.
+	        // Se devuelve una respuesta con el código de estado HTTP 404 (NOT_FOUND),
+	        // indicando que el cliente no fue encontrado.
+			LOGGER.info(ex.getMessage());
+			return new ResponseEntity<>(HttpStatus.NOT_FOUND);
+
+		} catch (Exception ex) {
+			// Si ocurre cualquier otro tipo de excepción, se captura y se registra el error.
+	        // El log registra el mensaje relacionado con el intento de eliminar el cliente.
+			LOGGER.error("ERROR DELETE {}", ex.getMessage());
+
+		}
+		
+		 // Si algo sale mal (fuera de las excepciones ClientNotFoundException), se devuelve una respuesta
+	    // con el mensaje "internal error" y un código de estado HTTP 500 (INTERNAL_SERVER_ERROR).
+		return new ResponseEntity<>("internal error", HttpStatus.INTERNAL_SERVER_ERROR);
+
+	}
+	
+	
+	
+	
+	
+	
+	
+	
+	
+}

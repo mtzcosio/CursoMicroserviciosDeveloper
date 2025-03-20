@@ -1,0 +1,9 @@
+# Microservice Client
+
+## Variables de ambiente
+
+- **DB_IP:** IP de la base de datos
+- **DB_PORT:** Puerto de la base de datos
+- **DB_NAME:** Nombre de la base de datos
+- **DB_USER:** Usuario de la base de datos
+- **DB_PASSWORD:** Password de la base de datos
